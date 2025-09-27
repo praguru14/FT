@@ -16,7 +16,7 @@ export interface Transaction {
   providedIn: 'root',
 })
 export class TransactionService {
-  private baseUrl = 'http://localhost:8090/transactions';
+  private baseUrl = 'https://financetracker-vgmc.onrender.com/transactions';
 
   constructor(private http: HttpClient) {}
 
