@@ -1,0 +1,17 @@
+<div class="container mx-auto p-4">
+    <h2 class="text-2xl font-bold text-center mb-6">Finance Overview</h2>
+
+    <!-- Pie Chart: Expenses by Category -->
+    <div class="max-w-md mx-auto bg-white shadow-md rounded-lg p-4 mb-8">
+        <h3 class="text-xl font-semibold text-center mb-4">Expenses by Category</h3>
+        <canvas baseChart [data]="pieChartData" [type]="pieChartType" [options]="pieChartOptions"
+            style="display:block; width:100%; height:300px;"></canvas>
+    </div>
+
+    <!-- Line Chart: Monthly Expenses -->
+    <div class="max-w-2xl mx-auto bg-white shadow-md rounded-lg p-4">
+        <h3 class="text-xl font-semibold text-center mb-4">Monthly Expenses</h3>
+        <canvas baseChart [data]="lineChartData" [type]="lineChartType" [options]="lineChartOptions"
+            style="display:block; width:100%; height:300px;"></canvas>
+    </div>
+</div>
