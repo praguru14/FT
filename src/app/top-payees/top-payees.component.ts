@@ -1,17 +1,15 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import {
-  TransactionService,
-  Transaction,
-} from '../service/transaction.service';
 import { FormsModule } from '@angular/forms';
+import { TransactionService } from '../service/transaction.service';
 
 interface TopPayee {
   payeeName: string;
   totalAmount: number;
   transactionCount: number;
-  transactions: { date: string; amount: number }[]; // for mini table
+  transactions: { date: string; amount: number }[];
   showTransactions?: boolean;
+  keepOpen?: boolean;
 }
 
 @Component({
@@ -64,7 +62,6 @@ export class TopPayeesComponent implements OnInit {
             prev.totalAmount += txn.amount;
             prev.count += 1;
             prev.transactions.push(txn);
-            payeeMap.set(name, prev);
           } else {
             payeeMap.set(name, {
               totalAmount: txn.amount,
@@ -80,7 +77,8 @@ export class TopPayeesComponent implements OnInit {
             totalAmount,
             transactionCount: count,
             transactions,
-            showTransactions: false, // initially hidden
+            showTransactions: false,
+            keepOpen: false,
           }))
           .sort((a, b) => b.totalAmount - a.totalAmount);
 
@@ -95,7 +93,14 @@ export class TopPayeesComponent implements OnInit {
     );
   }
 
-  toggleTransactions(payee: TopPayee) {
+  toggleTransactions(payee: any) {
+    console.log("Toggleing transactions for:", payee);
+    // Close all other payees (optional)
+    this.filteredPayees.forEach((p) => {
+      if (p !== payee) p.showTransactions = false;
+    });
+
+    // Toggle current one
     payee.showTransactions = !payee.showTransactions;
   }
 }

@@ -1,33 +1,121 @@
 .top-payees-container {
-  width: 80%;
-  max-width: 800px;
+  width: 90%;
+  max-width: 900px;
   margin: 30px auto;
   padding: 20px;
-  background-color: #ffffff;
+  background-color: #fdfdfd;
   border-radius: 12px;
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
 }
 
-.top-payees-container h4 {
-  font-weight: 600;
-  margin-bottom: 16px;
-}
-
+/* Search input */
 input.form-control {
-  border-radius: 8px;
-  border: 1px solid #ced4da;
+  border-radius: 10px;
+  border: 1px solid #ccc;
   width: 50%;
   margin: 0 auto 16px auto;
+  padding: 8px 12px;
+  transition: box-shadow 0.2s, border-color 0.2s;
+}
+
+input.form-control:focus {
+  outline: none;
+  border-color: #007bff;
+  box-shadow: 0 0 6px rgba(0, 123, 255, 0.3);
+}
+
+/* Main table */
+.table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
 }
 
 .table thead th {
-  background-color: #007bff !important;
-  color: white !important;
+  background-color: #007bff;
+  color: #fff;
   font-weight: 600;
   text-transform: uppercase;
+  padding: 10px 12px;
+  text-align: left;
 }
 
 .table tbody td {
   font-size: 0.95rem;
-  padding: 10px;
+  padding: 10px 12px;
+  vertical-align: middle;
+  border-top: 1px solid #e0e0e0;
+}
+
+/* Row wrapper for floating table */
+.payee-row {
+  position: relative;
+}
+
+/* Floating mini table (on click) */
+.floating-table-right {
+  position: absolute;
+  top: 0;
+  left: 100%;
+  margin-left: 12px;
+  z-index: 9999;
+  background-color: #fff;
+  border-radius: 10px;
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
+  min-width: 320px;
+  max-height: 300px;
+  overflow-y: auto;
+  animation: slideInRight 0.25s ease-in-out;
+  border: 1px solid #ddd;
+}
+
+/* Floating mini table contents */
+.floating-table-right table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.85rem;
+}
+
+.floating-table-right th,
+.floating-table-right td {
+  padding: 6px 8px;
+  border-bottom: 1px solid #eee;
+  text-align: left;
+  white-space: nowrap;
+}
+
+.floating-table-right th {
+  background-color: #f1f1f1;
+  font-weight: 600;
+}
+
+/* Animation */
+@keyframes slideInRight {
+  from {
+    opacity: 0;
+    transform: translateX(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+/* Buttons */
+.btn-outline-primary {
+  font-size: 0.85rem;
+  padding: 4px 8px;
+  border-radius: 6px;
+}
+
+/* Mobile responsive (show below instead of right) */
+@media (max-width: 768px) {
+  .floating-table-right {
+    position: relative;
+    left: 0;
+    top: 0;
+    margin: 8px 0 0 0;
+    min-width: 100%;
+  }
 }
