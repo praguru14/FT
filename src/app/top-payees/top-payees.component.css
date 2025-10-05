@@ -1,0 +1,33 @@
+.top-payees-container {
+  width: 80%;
+  max-width: 800px;
+  margin: 30px auto;
+  padding: 20px;
+  background-color: #ffffff;
+  border-radius: 12px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
+}
+
+.top-payees-container h4 {
+  font-weight: 600;
+  margin-bottom: 16px;
+}
+
+input.form-control {
+  border-radius: 8px;
+  border: 1px solid #ced4da;
+  width: 50%;
+  margin: 0 auto 16px auto;
+}
+
+.table thead th {
+  background-color: #007bff !important;
+  color: white !important;
+  font-weight: 600;
+  text-transform: uppercase;
+}
+
+.table tbody td {
+  font-size: 0.95rem;
+  padding: 10px;
+}

@@ -8,11 +8,13 @@ import {
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { NgChartsModule } from 'ng2-charts';
+import { TopPayeesComponent } from '../top-payees/top-payees.component';
+import { RouterModule } from '@angular/router';
 
 @Component({
   selector: 'app-dashboard',
   standalone: true,
-  imports: [NgChartsModule, CommonModule, FormsModule],
+  imports: [NgChartsModule, CommonModule, FormsModule,TopPayeesComponent,RouterModule],
   templateUrl: './dashboard.component.html',
   styleUrls: ['./dashboard.component.css'],
 })
@@ -24,6 +26,11 @@ export class DashboardComponent implements OnInit, OnDestroy {
   totalAmount = 0;
   avgDailySpend = 0;
   highestSpendDay: { amount: number; date: string } | null = null;
+  topPayees: {
+    payeeName: string;
+    totalAmount: number;
+    transactionCount: number;
+  }[] = [];
 
   private refreshSubscription?: Subscription;
 
@@ -62,6 +69,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
       .toString()
       .padStart(2, '0')}`;
     this.loadMonthData();
+    this.loadTopPayees();
 
     this.refreshSubscription = interval(540000).subscribe(() => {
       console.log('🔄 Auto-refresh triggered (every 9 minutes)');
@@ -84,6 +92,52 @@ export class DashboardComponent implements OnInit, OnDestroy {
       .padStart(2, '0')}`;
     this.loadMonthData();
   }
+  loadTopPayees() {
+    this.transactionService
+      .getTransactions({ page: 0, size: 100000 }) // large size to get all
+      .subscribe((res) => {
+        if (!res?.content?.length) {
+          console.warn('No transactions found');
+          this.topPayees = [];
+          return;
+        }
+
+        // Use case-insensitive check for type
+        const debitTransactions = res.content.filter(
+          (t) => t.type?.toUpperCase() === 'DEBIT'
+        );
+
+        const payeeMap = new Map<
+          string,
+          { totalAmount: number; count: number }
+        >();
+
+        debitTransactions.forEach((t) => {
+          const name = t.payeeName?.trim() || t.toUpi?.trim() || 'Unknown';
+          if (payeeMap.has(name)) {
+            const prev = payeeMap.get(name)!;
+            payeeMap.set(name, {
+              totalAmount: prev.totalAmount + (t.amount || 0),
+              count: prev.count + 1,
+            });
+          } else {
+            payeeMap.set(name, { totalAmount: t.amount || 0, count: 1 });
+          }
+        });
+
+        // Convert to array and sort descending by totalAmount
+        this.topPayees = Array.from(payeeMap.entries())
+          .map(([payeeName, { totalAmount, count }]) => ({
+            payeeName,
+            totalAmount,
+            transactionCount: count,
+          }))
+          .sort((a, b) => b.totalAmount - a.totalAmount)
+          .slice(0, 10); // top 10
+
+        console.log('Top Payees:', this.topPayees);
+      });
+  }
 
   loadMonthData() {
     if (!this.selectedMonth) return;
@@ -97,7 +151,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
       .subscribe((res) => {
         const transactions = res?.content || [];
         this.updateLineChart(transactions);
-        this.lastRefreshedAt = new Date(); 
+        this.lastRefreshedAt = new Date();
       });
   }
 

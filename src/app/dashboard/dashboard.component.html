@@ -1,3 +1,29 @@
+<!-- <div class="top-payees-container" *ngIf="topPayees.length">
+    <h5>Top Payees</h5>
+    <table class="table table-striped table-hover">
+        <thead>
+            <tr>
+                <th>Payee</th>
+                <th>Total Amount (₹)</th>
+                <th>Transactions</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr *ngFor="let p of topPayees">
+                <td>{{ p.payeeName }}</td>
+                <td>{{ p.totalAmount | currency:'INR':'symbol':'1.0-0' }}</td>
+                <td>{{ p.transactionCount }}</td>
+            </tr>
+        </tbody>
+    </table>
+</div> -->
+<div class="text-center mb-3">
+    <a routerLink="/top-payees" class="btn btn-outline-primary btn-sm">
+        Top Payees
+    </a>
+</div>
+
+
 <h2 class="text-center mb-4">Financial Dashboard</h2>
 
 <!-- Month navigation -->
@@ -94,4 +120,7 @@
             <span *ngIf="isTablePinned">Click anywhere on table to unpin.</span>
         </small>
     </div>
+
+    
 </div>
+

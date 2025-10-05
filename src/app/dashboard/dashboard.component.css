@@ -212,3 +212,20 @@ small.text-muted {
   color: #0066cc;
   font-size: 0.8rem;
 } */
+.top-payees-container {
+  width: 70%;
+  margin: 30px auto;
+  padding: 16px 20px;
+  background-color: #fff;
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+}
+
+.top-payees-container h5 {
+  font-weight: 600;
+  margin-bottom: 12px;
+}
+
+.top-payees-container table {
+  width: 100%;
+}
