@@ -1,1 +1,97 @@
-<p>dashboard works!</p>
+<h2 class="text-center mb-4">Financial Dashboard</h2>
+
+<!-- Month navigation -->
+<div class="text-center mb-4">
+    <button (click)="changeMonth(-1)" class="btn btn-outline-primary btn-sm">◀ Prev</button>
+    <input type="month" [(ngModel)]="selectedMonth" (ngModelChange)="loadMonthData()"
+        class="mx-2 form-control d-inline-block" style="width: 180px;" />
+    <button (click)="changeMonth(1)" class="btn btn-outline-primary btn-sm">Next ▶</button>
+</div>
+<!-- Auto-refresh info -->
+<div class="dashboard-header text-center position-relative mb-4">
+    <div class="auto-refresh-counter">
+        🔁 {{ autoHitCount }}
+        <small *ngIf="lastRefreshedAt">
+            ({{ lastRefreshedAt | date: 'shortTime' }})
+        </small>
+    </div>
+</div>
+
+<!-- <div class="text-center my-3">
+    <div class="alert alert-info d-inline-block py-2 px-4 shadow-sm">
+        <strong>🔁 Auto-refresh count:</strong> {{ autoHitCount }}
+        <br />
+        <small *ngIf="lastRefreshedAt">
+            Last refreshed at:
+            {{ lastRefreshedAt | date: 'shortTime' }}
+        </small>
+    </div>
+</div> -->
+
+<!-- Summary -->
+<div class="summary text-center mb-4">
+    <p>Total Transactions: <strong>{{ totalTransactions }}</strong></p>
+    <p>
+        Total Amount:
+        <strong>{{ totalAmount | currency: 'INR':'symbol':'1.0-0' }}</strong>
+    </p>
+    <p>Average Daily Spend: ₹{{ avgDailySpend | number: '1.0-0' }}</p>
+    <p *ngIf="highestSpendDay">
+        Highest Spend: ₹{{ highestSpendDay.amount }} on {{ highestSpendDay.date }}
+    </p>
+</div>
+
+<!-- Line Chart -->
+<div class="chart-container position-relative" *ngIf="lineDailyData?.labels?.length"
+    (mouseenter)="!isTablePinned && (isTableVisible = true)" (mouseleave)="!isTablePinned && (isTableVisible = false)">
+    <h4>Daily Spending</h4>
+    <canvas baseChart [data]="lineDailyData" [type]="lineChartType" [options]="lineChartOptions"
+        (chartHover)="onLineHover($event)" class="chart-canvas"></canvas>
+
+    <!-- Transactions Table (Appears on hover or when pinned) -->
+    <div class="hover-table-container shadow" *ngIf="isTableVisible && hoveredTransactions.length"
+        (click)="toggleTablePin()" [class.pinned]="isTablePinned">
+        <div class="d-flex justify-content-between align-items-center mb-2">
+            <h5 class="m-0">
+                Transactions for {{ hoveredDate }}
+                <small class="text-muted">(DEBIT only)</small>
+            </h5>
+            <button class="btn btn-sm btn-outline-secondary" (click)="exportCSV(); $event.stopPropagation()">
+                <i class="bi bi-download"></i> Export CSV
+            </button>
+        </div>
+
+        <input type="text" [(ngModel)]="searchText" (ngModelChange)="filterTransactions()"
+            placeholder="🔍 Search Payee / UPI" class="form-control mb-3 shadow-sm"
+            (click)="$event.stopPropagation()" />
+
+        <div class="table-responsive shadow-sm rounded" (click)="$event.stopPropagation()">
+            <table class="table table-hover align-middle mb-0">
+                <thead class="table-primary sticky-top">
+                    <tr>
+                        <th scope="col">Payee</th>
+                        <th scope="col" class="text-end">Amount (₹)</th>
+                        <th scope="col">UPI</th>
+                        <th scope="col">Time</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr *ngFor="let t of filteredTransactions" [class.table-warning]="t.amount > 1000">
+                        <td><strong>{{ t.payeeName }}</strong></td>
+                        <td class="text-end text-success fw-semibold">
+                            {{ t.amount | currency: 'INR':'symbol':'1.0-0' }}
+                        </td>
+                        <td><code class="text-muted">{{ t.toUpi }}</code></td>
+                        <td>{{ t.emailReceivedDate | date: 'shortTime' }}</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <small class="text-muted d-block mt-2">
+            💡 Hover on the chart to view transactions for that date.
+            <span *ngIf="!isTablePinned">Click table to pin it.</span>
+            <span *ngIf="isTablePinned">Click anywhere on table to unpin.</span>
+        </small>
+    </div>
+</div>
