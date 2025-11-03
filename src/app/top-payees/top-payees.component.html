@@ -1,7 +1,17 @@
 <div class="top-payees-container">
+    <!-- Header + Route Link -->
+    <!-- <div class="d-flex justify-content-between align-items-center mb-3">
+        <h5 class="mb-0">Home</h5>
+        <a routerLink="/" class="btn btn-sm btn-outline-primary">
+            View All Payees
+        </a>
+    </div> -->
+
+    <!-- Search Input -->
     <input type="text" placeholder="Search payees..." [(ngModel)]="searchText" (input)="filterPayees()"
         class="form-control mb-3" />
 
+    <!-- Table -->
     <table class="table table-hover">
         <thead>
             <tr>
@@ -11,9 +21,10 @@
                 <th>Details</th>
             </tr>
         </thead>
+
         <tbody>
             <ng-container *ngFor="let payee of filteredPayees">
-                <tr>
+                <tr class="payee-row" (mouseenter)="payee.keepOpen = true" (mouseleave)="payee.keepOpen = false">
                     <td>{{ payee.payeeName }}</td>
                     <td>{{ payee.totalAmount | number: '1.2-2' }}</td>
                     <td>{{ payee.transactionCount }}</td>
@@ -22,28 +33,26 @@
                             {{ payee.showTransactions ? 'Hide' : 'Show' }}
                         </button>
                     </td>
-                </tr>
 
-                <!-- Inline expanding row (safe for all browsers) -->
-                <tr *ngIf="payee.showTransactions">
-                    <td colspan="4">
-                        <div class="floating-inline">
-                            <table class="table table-sm table-bordered mb-0">
-                                <thead>
-                                    <tr>
-                                        <th>Date</th>
-                                        <th>Amount (₹)</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    <tr *ngFor="let txn of payee.transactions">
-                                        <td>{{ txn.date }}</td>
-                                        <td>{{ txn.amount | number: '1.2-2' }}</td>
-                                    </tr>
-                                </tbody>
-                            </table>
-                        </div>
-                    </td>
+                    <!-- Floating table -->
+                    <div class="floating-table-right shadow-sm rounded border bg-white p-2"
+                        *ngIf="payee.showTransactions || payee.keepOpen" (mouseenter)="payee.keepOpen = true"
+                        (mouseleave)="payee.keepOpen = false">
+                        <table class="table table-sm table-bordered mb-0">
+                            <thead>
+                                <tr>
+                                    <th>Date</th>
+                                    <th>Amount (₹)</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr *ngFor="let txn of payee.transactions">
+                                    <td>{{ txn.date }}</td>
+                                    <td>{{ txn.amount | number: '1.2-2' }}</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
                 </tr>
             </ng-container>
         </tbody>

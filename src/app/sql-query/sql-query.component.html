@@ -1,0 +1,30 @@
+<div class="container mt-4">
+    <h3>SQL Query Runner</h3>
+
+    <!-- SQL Input -->
+    <textarea class="form-control mb-3" rows="5" placeholder="Enter your SQL query here..."
+        [(ngModel)]="sqlQuery"></textarea>
+
+    <button class="btn btn-primary mb-3" (click)="runQuery()">Run Query</button>
+
+    <!-- Error -->
+    <div *ngIf="errorMessage" class="alert alert-danger">
+        {{ errorMessage }}
+    </div>
+
+    <!-- Results Table -->
+    <div *ngIf="results.length" class="table-responsive">
+        <table class="table table-bordered table-striped">
+            <thead>
+                <tr>
+                    <th *ngFor="let col of getColumns()">{{ col }}</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr *ngFor="let row of results">
+                    <td *ngFor="let col of getColumns()">{{ row[col] }}</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+</div>

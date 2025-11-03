@@ -1,6 +1,7 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
+import { baseUrl } from '../../baseUrl';
 
 export interface Transaction {
   date: string; // ISO date string
@@ -16,7 +17,9 @@ export interface Transaction {
   providedIn: 'root',
 })
 export class TransactionService {
-  private baseUrl = 'https://financetracker-vgmc.onrender.com/transactions';
+  private baseUrl = baseUrl.apiUrl;
+
+  // private baseUrl = 'https://financetracker-vgmc.onrender.com/transactions';
 
   constructor(private http: HttpClient) {}
 

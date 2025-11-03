@@ -119,3 +119,55 @@ input.form-control:focus {
     min-width: 100%;
   }
 }
+.top-payees-container {
+  width: 90%;
+  max-width: 900px;
+  margin: 30px auto;
+  padding: 20px;
+  background: #fff;
+  border-radius: 12px;
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+  position: relative;
+  overflow: visible;
+}
+
+/* Floating mini table beside each row */
+.floating-table-right {
+  position: absolute;
+  top: 0;
+  left: 100%;
+  margin-left: 12px;
+  z-index: 9999;
+  background-color: #fff;
+  border-radius: 10px;
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
+  min-width: 300px;
+  max-height: 300px;
+  overflow-y: auto;
+  border: 1px solid #ddd;
+  animation: slideInRight 0.25s ease-in-out;
+}
+
+/* Animation */
+@keyframes slideInRight {
+  from {
+    opacity: 0;
+    transform: translateX(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+/* On smaller screens, stack below */
+@media (max-width: 768px) {
+  .floating-table-right {
+    left: 0;
+    top: 100%;
+    margin-left: 0;
+    margin-top: 8px;
+    width: 100%;
+  }
+}
+
