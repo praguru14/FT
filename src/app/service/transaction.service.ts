@@ -4,6 +4,7 @@ import { Observable } from 'rxjs';
 import { baseUrl } from '../../baseUrl';
 
 export interface Transaction {
+  id: any;
   date: string; // ISO date string
   amount: number;
   type: string;

@@ -14,7 +14,13 @@ import { RouterModule } from '@angular/router';
 @Component({
   selector: 'app-dashboard',
   standalone: true,
-  imports: [NgChartsModule, CommonModule, FormsModule,TopPayeesComponent,RouterModule],
+  imports: [
+    NgChartsModule,
+    CommonModule,
+    FormsModule,
+    TopPayeesComponent,
+    RouterModule,
+  ],
   templateUrl: './dashboard.component.html',
   styleUrls: ['./dashboard.component.css'],
 })
@@ -33,6 +39,10 @@ export class DashboardComponent implements OnInit, OnDestroy {
   }[] = [];
 
   private refreshSubscription?: Subscription;
+
+  // --- session-only hidden transaction IDs (persisted to sessionStorage) ---
+  hiddenTransactionIds = new Set<number>();
+  private readonly HIDDEN_KEY = 'hiddenTxns';
 
   autoHitCount = 0;
   lastRefreshedAt: Date | null = null;
@@ -64,6 +74,8 @@ export class DashboardComponent implements OnInit, OnDestroy {
   constructor(private transactionService: TransactionService) {}
 
   ngOnInit(): void {
+    this.loadHiddenFromSession();
+
     const now = new Date();
     this.selectedMonth = `${now.getFullYear()}-${(now.getMonth() + 1)
       .toString()
@@ -74,6 +86,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
     this.refreshSubscription = interval(540000).subscribe(() => {
       console.log('🔄 Auto-refresh triggered (every 9 minutes)');
       this.loadMonthData();
+      this.loadTopPayees();
       this.autoHitCount++;
       this.lastRefreshedAt = new Date();
     });
@@ -83,6 +96,32 @@ export class DashboardComponent implements OnInit, OnDestroy {
     this.refreshSubscription?.unsubscribe();
   }
 
+  /* -------------------- sessionStorage helpers -------------------- */
+  private loadHiddenFromSession() {
+    try {
+      const raw = sessionStorage.getItem(this.HIDDEN_KEY);
+      if (raw) {
+        const arr = JSON.parse(raw) as number[];
+        this.hiddenTransactionIds = new Set(arr);
+      }
+    } catch (e) {
+      console.warn('Unable to load hidden txn ids from sessionStorage', e);
+      this.hiddenTransactionIds = new Set();
+    }
+  }
+
+  private saveHiddenToSession() {
+    try {
+      sessionStorage.setItem(
+        this.HIDDEN_KEY,
+        JSON.stringify(Array.from(this.hiddenTransactionIds))
+      );
+    } catch (e) {
+      console.warn('Unable to save hidden txn ids to sessionStorage', e);
+    }
+  }
+
+  /* -------------------- month / navigation -------------------- */
   changeMonth(offset: number) {
     if (!this.selectedMonth) return;
     const [year, month] = this.selectedMonth.split('-').map(Number);
@@ -91,7 +130,9 @@ export class DashboardComponent implements OnInit, OnDestroy {
       .toString()
       .padStart(2, '0')}`;
     this.loadMonthData();
+    this.loadTopPayees();
   }
+
   loadTopPayees() {
     this.transactionService
       .getTransactions({ page: 0, size: 100000 }) // large size to get all
@@ -102,9 +143,11 @@ export class DashboardComponent implements OnInit, OnDestroy {
           return;
         }
 
-        // Use case-insensitive check for type
+        // Use case-insensitive check for type and exclude hidden ids
         const debitTransactions = res.content.filter(
-          (t) => t.type?.toUpperCase() === 'DEBIT'
+          (t) =>
+            t.type?.toUpperCase() === 'DEBIT' &&
+            !this.hiddenTransactionIds.has(t.id)
         );
 
         const payeeMap = new Map<
@@ -155,8 +198,13 @@ export class DashboardComponent implements OnInit, OnDestroy {
       });
   }
 
+  /* -------------------- main chart / totals update -------------------- */
   private updateLineChart(transactions: Transaction[]) {
-    const debitTransactions = transactions.filter((t) => t.type === 'DEBIT');
+    // Exclude hidden transactions from chart and totals
+    const debitTransactions = transactions.filter(
+      (t) => t.type === 'DEBIT' && !this.hiddenTransactionIds.has(t.id)
+    );
+
     this.totalTransactions = debitTransactions.length;
     this.totalAmount = debitTransactions.reduce(
       (sum, t) => sum + (t.amount ?? 0),
@@ -197,32 +245,37 @@ export class DashboardComponent implements OnInit, OnDestroy {
       maxAmount > 0 ? { amount: maxAmount, date: maxDate } : null;
   }
 
-  onLineHover(event: any) {
-    const activePoints = event.active;
-    if (activePoints?.length && !this.isTablePinned) {
-      const index = activePoints[0].index;
-      const chart = activePoints[0].element.$context.chart;
-      const date = chart.data.labels[index] as string;
-      this.hoveredDate = date;
-      this.isTableVisible = true;
+  /* -------------------- hover & table handling -------------------- */
+  // onLineHover(event: any) {
+  //   const activePoints = event.active;
+  //   if (activePoints?.length && !this.isTablePinned) {
+  //     const index = activePoints[0].index;
+  //     const chart = activePoints[0].element.$context.chart;
+  //     const date = chart.data.labels[index] as string;
+  //     this.hoveredDate = date;
+  //     this.isTableVisible = true;
 
-      this.transactionService.getTransactionsForDay(date).subscribe((res) => {
-        this.hoveredTransactions = res.filter((t) => t.type === 'DEBIT');
-        this.filteredTransactions = [...this.hoveredTransactions];
-      });
-    } else if (!this.isTablePinned) {
-      this.isTableVisible = false;
-      this.hoveredTransactions = [];
-      this.filteredTransactions = [];
-    }
-  }
+  //     this.transactionService.getTransactionsForDay(date).subscribe((res) => {
+  //       // filter to DEBIT and exclude hidden transactions
+  //       this.hoveredTransactions = res
+  //         .filter((t) => t.type === 'DEBIT')
+  //         .filter((t) => !this.hiddenTransactionIds.has(t.id));
+  //       this.filteredTransactions = [...this.hoveredTransactions];
+  //     });
+  //   } else if (!this.isTablePinned) {
+  //     this.isTableVisible = false;
+  //     this.hoveredTransactions = [];
+  //     this.filteredTransactions = [];
+  //   }
+  // }
 
   filterTransactions() {
-    const text = this.searchText.toLowerCase();
+    const text = this.searchText.toLowerCase().trim();
     this.filteredTransactions = this.hoveredTransactions.filter(
       (t) =>
-        t.payeeName.toLowerCase().includes(text) ||
-        t.toUpi.toLowerCase().includes(text)
+        (t.payeeName?.toLowerCase().includes(text) ||
+          t.toUpi?.toLowerCase().includes(text)) &&
+        !this.hiddenTransactionIds.has(t.id)
     );
   }
 
@@ -236,4 +289,125 @@ export class DashboardComponent implements OnInit, OnDestroy {
   exportCSV() {
     console.log('Export CSV clicked for', this.hoveredDate);
   }
+
+  /* -------------------- hide / restore (session-only) -------------------- */
+  hideTransaction(txn: Transaction, event?: Event) {
+    if (event) event.stopPropagation();
+    if (!txn?.id) return;
+    this.hiddenTransactionIds.add(txn.id);
+    this.saveHiddenToSession();
+
+    // Remove it immediately from the visible lists & update UI
+    this.filteredTransactions = this.filteredTransactions.filter(
+      (t) => t.id !== txn.id
+    );
+    this.hoveredTransactions = this.hoveredTransactions.filter(
+      (t) => t.id !== txn.id
+    );
+
+    // Rebuild chart/totals by reloading the month data (or you can update incrementally)
+    // calling loadMonthData will re-fetch from backend; to avoid re-fetch, you could
+    // instead call updateLineChart with the previous set minus hidden — for simplicity, call loadMonthData
+    this.loadMonthData();
+    this.loadTopPayees();
+  }
+
+  clearHiddenTransactions() {
+    this.hiddenTransactionIds.clear();
+    this.saveHiddenToSession();
+    // Refresh data to reflect restored transactions
+    this.loadMonthData();
+    this.loadTopPayees();
+
+    // if table is visible, re-fetch hovered day
+    if (this.hoveredDate) {
+      this.transactionService
+        .getTransactionsForDay(this.hoveredDate)
+        .subscribe((res) => {
+          this.hoveredTransactions = res.filter((t) => t.type === 'DEBIT');
+          this.filterTransactions();
+        });
+    }
+  }
+
+  private lastHoveredDate: string | null = null;
+  private hoverTimeout: any;
+  onChartLeave() {
+    if (!this.isTablePinned) {
+      clearTimeout(this.hoverTimeout);
+      this.hoverTimeout = setTimeout(() => {
+        this.isTableVisible = false;
+        this.lastHoveredDate = null;
+      }, 300);
+    }
+  }
+
+  onLineHover(event: any) {
+    const activePoints = event.active;
+
+    // No active point — hide table (if not pinned)
+    if (!activePoints?.length) {
+      if (!this.isTablePinned) {
+        clearTimeout(this.hoverTimeout);
+        this.hoverTimeout = setTimeout(() => {
+          this.isTableVisible = false;
+        }, 250); // small delay prevents flicker
+      }
+      return;
+    }
+
+    // Get hovered date
+    const index = activePoints[0].index;
+    const chart = activePoints[0].element.$context.chart;
+    const date = chart.data.labels[index] as string;
+
+    // Prevent redundant reloads if same date hovered
+    if (this.lastHoveredDate === date) return;
+
+    this.lastHoveredDate = date;
+    this.hoveredDate = date;
+    this.isTableVisible = true;
+
+    // Debounce API call for smoother feel
+    clearTimeout(this.hoverTimeout);
+    this.hoverTimeout = setTimeout(() => {
+      this.transactionService.getTransactionsForDay(date).subscribe((res) => {
+        this.hoveredTransactions = res.filter((t) => t.type === 'DEBIT');
+        this.filteredTransactions = this.hoveredTransactions.filter(
+          (t) => !this.hiddenTransactionIds.has(t.id)
+        );
+      });
+    }, 150);
+  }
+  // --- New Methods for Day Navigation ---
+  changeDay(offset: number) {
+    if (!this.hoveredDate) return;
+
+    const currentDate = new Date(this.hoveredDate);
+    currentDate.setDate(currentDate.getDate() + offset);
+    const newDate = currentDate.toISOString().split('T')[0]; // format YYYY-MM-DD
+
+    this.loadTransactionsForDate(newDate);
+  }
+
+  // --- New method for manual date entry ---
+  onDateInputChange(event: any) {
+    const newDate = event.target.value;
+    if (newDate) this.loadTransactionsForDate(newDate);
+  }
+
+  // --- Centralized function for daily data ---
+  loadTransactionsForDate(date: string) {
+    this.hoveredDate = date;
+    this.lastHoveredDate = date;
+    this.isTableVisible = true;
+
+    this.transactionService.getTransactionsForDay(date).subscribe((res) => {
+      this.hoveredTransactions = res.filter((t) => t.type === 'DEBIT');
+      this.filteredTransactions = this.hoveredTransactions.filter(
+        (t) => !this.hiddenTransactionIds.has(t.id)
+      );
+    });
+  }
+  
 }

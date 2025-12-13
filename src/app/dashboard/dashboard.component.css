@@ -311,3 +311,24 @@ small.text-muted {
   box-shadow: 0 4px 12px rgba(0, 123, 255, 0.25);
 }
 
+.opacity-50 {
+  opacity: 0.5;
+}
+
+.table td,
+.table th {
+  vertical-align: middle;
+}
+
+.btn-outline-danger i,
+.btn-outline-success i {
+  font-size: 1.1rem;
+}
+.hover-table-container {
+  transition: opacity 0.3s ease, transform 0.2s ease;
+  opacity: 1;
+}
+.hover-table-container.ng-leave {
+  opacity: 0;
+  transform: translateY(-5px);
+}
