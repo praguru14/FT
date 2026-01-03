@@ -330,6 +330,13 @@ export class DashboardComponent implements OnInit, OnDestroy {
     }
   }
 
+  refresh(){
+    this.transactionService.refresh().subscribe(()=>{
+      this.loadMonthData();
+      this.loadTopPayees();
+    });
+  }
+
   private lastHoveredDate: string | null = null;
   private hoverTimeout: any;
   onChartLeave() {

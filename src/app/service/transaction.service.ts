@@ -66,4 +66,8 @@ export class TransactionService {
     const params = new HttpParams().set('date', date);
     return this.http.get<any[]>(`${this.baseUrl}/day`, { params });
   }
+
+  refresh(){
+    return this.http.get(`${this.baseUrl}/refresh`);
+  }
 }

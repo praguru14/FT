@@ -15,6 +15,7 @@
 <div class="dashboard-header text-center position-relative mb-4">
     <div class="auto-refresh-counter">
         🔄 {{ autoHitCount }}
+            <button (click)="refresh()" class="">Refresh</button>
         <small *ngIf="lastRefreshedAt">({{ lastRefreshedAt | date: 'shortTime' }})</small>
     </div>
 </div>
