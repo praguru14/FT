@@ -210,9 +210,18 @@ export class DashboardComponent implements OnInit, OnDestroy {
       (sum, t) => sum + (t.amount ?? 0),
       0
     );
-    this.avgDailySpend = Math.round(
-      this.totalAmount / (debitTransactions.length || 1)
-    );
+  const [year, month] = this.selectedMonth.split('-').map(Number);
+  const now = new Date();
+
+  let daysToConsider: number;
+
+  if (year === now.getFullYear() && month === now.getMonth() + 1) {
+    daysToConsider = now.getDate();
+  } else {
+    daysToConsider = new Date(year, month, 0).getDate();
+  }
+
+  this.avgDailySpend = Math.round(this.totalAmount / (daysToConsider || 1));
 
     const dailyMap = new Map<string, number>();
     debitTransactions.forEach((t) =>
