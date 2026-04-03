@@ -37,7 +37,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
     totalAmount: number;
     transactionCount: number;
   }[] = [];
-
+topMerchant: { name: string; amount: number; count: number } | null = null;
   private refreshSubscription?: Subscription;
 
   // --- session-only hidden transaction IDs (persisted to sessionStorage) ---
@@ -90,8 +90,12 @@ export class DashboardComponent implements OnInit, OnDestroy {
       this.autoHitCount++;
       this.lastRefreshedAt = new Date();
     });
+const today = new Date().toISOString().split('T')[0];
+this.loadTransactionsForDate(today);
   }
 
+categoryTotals: { [key: string]: number } = {};
+monthTransactions: Transaction[] = [];
   ngOnDestroy(): void {
     this.refreshSubscription?.unsubscribe();
   }
@@ -193,10 +197,29 @@ export class DashboardComponent implements OnInit, OnDestroy {
       .getTransactions({ fromDate, toDate, page: 0, size: 1000 })
       .subscribe((res) => {
         const transactions = res?.content || [];
-        this.updateLineChart(transactions);
+this.monthTransactions = transactions;
+this.updateLineChart(transactions);
         this.lastRefreshedAt = new Date();
       });
   }
+
+updateCategory(t: Transaction, event: any) {
+
+  const newCategory = event.target.value;
+
+  // update locally so UI changes instantly
+  t.categorySwipe = newCategory;
+
+  // call backend API
+  this.transactionService
+    .updateCategorySwipe(t.id, newCategory)
+    .subscribe(() => {
+
+      // reload data so charts + totals update
+      this.loadMonthData();
+
+    });
+}
 
   /* -------------------- main chart / totals update -------------------- */
   private updateLineChart(transactions: Transaction[]) {
@@ -210,6 +233,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
       (sum, t) => sum + (t.amount ?? 0),
       0
     );
+this.animateTotalAmount(this.totalAmount);
   const [year, month] = this.selectedMonth.split('-').map(Number);
   const now = new Date();
 
@@ -252,7 +276,73 @@ export class DashboardComponent implements OnInit, OnDestroy {
     });
     this.highestSpendDay =
       maxAmount > 0 ? { amount: maxAmount, date: maxDate } : null;
+this.categoryTotals = {};
+
+debitTransactions.forEach(t => {
+  const category = this.getCategory(t);
+
+  if (!this.categoryTotals[category]) {
+    this.categoryTotals[category] = 0;
   }
+
+  this.categoryTotals[category] += t.amount ?? 0;
+});
+
+const merchantMap = new Map<string, { amount: number; count: number }>();
+
+debitTransactions.forEach((t) => {
+  const name = t.payeeName || t.toUpi || 'Unknown';
+
+  if (!merchantMap.has(name)) {
+    merchantMap.set(name, { amount: 0, count: 0 });
+  }
+
+  const m = merchantMap.get(name)!;
+  m.amount += t.amount ?? 0;
+  m.count += 1;
+});
+
+let topName = '';
+let topAmount = 0;
+let topCount = 0;
+
+merchantMap.forEach((v, k) => {
+  if (v.amount > topAmount) {
+    topName = k;
+    topAmount = v.amount;
+    topCount = v.count;
+  }
+});
+
+this.topMerchant = {
+  name: topName,
+  amount: topAmount,
+  count: topCount,
+};
+
+  }
+animatedTotalAmount = 0;
+animateTotalAmount(target: number) {
+
+  const duration = 800; // animation time ms
+  const frameRate = 30;
+
+  const steps = duration / frameRate;
+  const increment = target / steps;
+
+  this.animatedTotalAmount = 0;
+
+  const interval = setInterval(() => {
+
+    this.animatedTotalAmount += increment;
+
+    if (this.animatedTotalAmount >= target) {
+      this.animatedTotalAmount = target;
+      clearInterval(interval);
+    }
+
+  }, frameRate);
+}
 
   /* -------------------- hover & table handling -------------------- */
   // onLineHover(event: any) {
@@ -357,6 +447,25 @@ export class DashboardComponent implements OnInit, OnDestroy {
       }, 300);
     }
   }
+isCategoryModalOpen = false;
+selectedCategory = '';
+categoryTransactions: Transaction[] = [];
+openCategoryModal(category: string) {
+
+  this.selectedCategory = category;
+
+  this.categoryTransactions = this.monthTransactions.filter(
+    (t) =>
+      t.type === 'DEBIT' &&
+      this.getCategory(t) === category &&
+      !this.hiddenTransactionIds.has(t.id)
+  );
+
+  this.isCategoryModalOpen = true;
+}
+closeCategoryModal() {
+  this.isCategoryModalOpen = false;
+}
 
   onLineHover(event: any) {
     const activePoints = event.active;
@@ -425,5 +534,65 @@ export class DashboardComponent implements OnInit, OnDestroy {
       );
     });
   }
-  
+getCategory(t: Transaction): string {
+
+  if (t.categorySwipe) {
+    return t.categorySwipe;
+  }
+  const text = (t.payeeName + ' ' + t.toUpi).toLowerCase();
+
+  // 👨‍👩‍👧 Family transfers
+  if (
+    text.includes('ishika') ||
+    text.includes('geeta') ||
+    text.includes('prafull')
+  ) return 'Family';
+
+  // 🚆 Travel (Train / Metro / Tickets)
+  // if (
+
+  // ) return 'Travel';
+
+  // 🏢 Office Spend (Cafeteria/Snacks)
+  if (
+    text.includes('hungerbox') ||
+    text.includes('grubox') ||
+    text.includes('foodies health and snacks co ora')
+  ) return 'Office Spend';
+
+  // 🍔 Food
+  if (
+    text.includes('swiggy') ||
+    text.includes('zomato')||
+    text.includes('zepto')||text.includes('blinkit')
+  ) return 'Food';
+
+  // 🚕 Transport
+  if (
+    text.includes('uber') ||
+    text.includes('ola')||text.includes('rapido')||
+    text.includes('metro')||text.includes('irctc') ||
+    text.includes('utc')||text.includes('travel')||text.includes('transport')
+  ) return 'Transport';
+
+  // 🛒 Shopping
+  if (
+    text.includes('amazon') ||
+    text.includes('flipkart')
+  ) return 'Shopping';
+
+  // 📱 Bills
+  if (
+    text.includes('recharge') ||
+    text.includes('airtel') ||
+    text.includes('jio')||
+    text.includes('cred')||text.includes('upcl')||
+    text.includes('mutual')
+  ) return 'Bills';
+  if (
+    text.includes('medi')
+  ) return 'Medicine';
+  return 'Other';
 }
+}
+

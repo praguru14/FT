@@ -12,6 +12,7 @@ export interface Transaction {
   payeeName: string;
   bankName: string;
   emailReceivedDate?: string;
+ categorySwipe?: string;
 }
 
 @Injectable({
@@ -39,7 +40,12 @@ export class TransactionService {
       params: httpParams,
     });
   }
-
+updateCategorySwipe(id: number, category: string) {
+  return this.http.put(
+    `${this.baseUrl}/transactions/${id}/category-swipe`,
+    { categorySwipe: category }
+  );
+}
   // --- Get total spent in a specific month ---
   getTotalSpentInMonth(year: number, month: number): Observable<number> {
     const params = new HttpParams()

@@ -1,128 +1,299 @@
+```html
 <!-- 🏦 Dashboard Header -->
 <h2 class="text-center mb-4">Financial Dashboard</h2>
 
 <!-- 📅 Month Navigation -->
 <div class="text-center mb-4">
-    <button (click)="changeMonth(-1)" class="btn btn-outline-primary btn-sm">◀ Prev</button>
+  <button (click)="changeMonth(-1)" class="btn btn-outline-primary btn-sm">◀ Prev</button>
 
-    <input type="month" [(ngModel)]="selectedMonth" (ngModelChange)="loadMonthData()"
-        class="mx-2 form-control d-inline-block" style="width: 180px" />
+  <input
+    type="month"
+    [(ngModel)]="selectedMonth"
+    (ngModelChange)="loadMonthData()"
+    class="mx-2 form-control d-inline-block"
+    style="width:180px"
+  />
 
-    <button (click)="changeMonth(1)" class="btn btn-outline-primary btn-sm">Next ▶</button>
+  <button (click)="changeMonth(1)" class="btn btn-outline-primary btn-sm">Next ▶</button>
 </div>
 
-<!-- 🔁 Auto Refresh Info -->
+<!-- 🔁 Auto Refresh -->
 <div class="dashboard-header text-center position-relative mb-4">
-    <div class="auto-refresh-counter">
-        🔄 {{ autoHitCount }}
-            <button (click)="refresh()" class="">Refresh</button>
-        <small *ngIf="lastRefreshedAt">({{ lastRefreshedAt | date: 'shortTime' }})</small>
-    </div>
+  <div class="auto-refresh-counter">
+    🔄 {{ autoHitCount }}
+    <button (click)="refresh()">Refresh</button>
+    <small *ngIf="lastRefreshedAt">
+      ({{ lastRefreshedAt | date:'shortTime' }})
+    </small>
+  </div>
 </div>
 
 <!-- 📊 Summary -->
 <div class="summary text-center mb-4 d-flex justify-content-center flex-wrap gap-3 align-items-center">
-    <div class="metric-badge">Total Transactions: <strong>{{ totalTransactions }}</strong></div>
-    <div class="metric-badge">
-        Total Amount: <strong>{{ totalAmount | currency: 'INR':'symbol':'1.0-0' }}</strong>
-    </div>
-    <div class="metric-badge">Avg. Daily Spend: ₹{{ avgDailySpend | number: '1.0-0' }}</div>
-    <div class="metric-badge" *ngIf="highestSpendDay">
-        Highest Spend: ₹{{ highestSpendDay.amount }} on {{ highestSpendDay.date }}
-    </div>
+  <div class="metric-badge">
+    Total Transactions: <strong>{{ totalTransactions }}</strong>
+  </div>
 
-    <a routerLink="/top-payees" class="metric-badge metric-badge-link" title="View Top Payees">
-        Top Payees
-    </a>
+  <div class="metric-badge">
+    Total Amount:
+    <strong>{{ animatedTotalAmount | currency:'INR':'symbol':'1.0-0' }}</strong>
+  </div>
+
+  <div class="metric-badge">
+    Avg. Daily Spend: ₹{{ avgDailySpend | number:'1.0-0' }}
+  </div>
+
+  <div class="metric-badge" *ngIf="highestSpendDay">
+    Highest Spend: ₹{{ highestSpendDay.amount }} on {{ highestSpendDay.date }}
+  </div>
+
+  <a routerLink="/top-payees" class="metric-badge metric-badge-link">
+    Top Payees
+  </a>
+
+  <div class="metric-badge" *ngIf="topMerchant">
+    Top Merchant: {{ topMerchant.name }} ₹{{ topMerchant.amount }}
+  </div>
 </div>
 
-<!-- 📈 Line Chart + Hover Table -->
-<div class="chart-container position-relative" *ngIf="lineDailyData?.labels?.length"
-    (mouseleave)="onChartLeave()"
+<!-- 📈 Chart -->
+<div
+  class="chart-container position-relative"
+  *ngIf="lineDailyData?.labels?.length"
+  (mouseleave)="onChartLeave()"
 >
-    <h4>Daily Spending</h4>
 
-    <canvas baseChart [data]="lineDailyData" [type]="lineChartType" [options]="lineChartOptions"
-        (chartHover)="onLineHover($event)" class="chart-canvas"></canvas>
+  <h4>Daily Spending</h4>
 
-    <!-- 💬 Hover Transactions Table -->
-    <div class="hover-table-container shadow-lg" *ngIf="isTableVisible && hoveredTransactions.length"
-        (click)="toggleTablePin()" [class.pinned]="isTablePinned">
-        <!-- Header -->
-        <div class="d-flex justify-content-between align-items-center mb-3">
-<div class="d-flex align-items-center gap-2 flex-wrap">
-    <button class="btn btn-sm btn-outline-primary" (click)="changeDay(-1); $event.stopPropagation()">◀</button>
+  <canvas
+    baseChart
+    [data]="lineDailyData"
+    [type]="lineChartType"
+    [options]="lineChartOptions"
+    (chartHover)="onLineHover($event)"
+    class="chart-canvas"
+  ></canvas>
 
-    <input type="date" [value]="hoveredDate" (change)="onDateInputChange($event); $event.stopPropagation()"
-        class="form-control form-control-sm" style="width: 160px;" />
-
-    <button class="btn btn-sm btn-outline-primary" (click)="changeDay(1); $event.stopPropagation()">▶</button>
-
-    <small class="text-muted ms-2">(DEBIT only)</small>
-</div>
-
-
-            <div>
-                <button *ngIf="hiddenTransactionIds.size > 0" class="btn btn-sm btn-outline-secondary me-2"
-                    (click)="clearHiddenTransactions(); $event.stopPropagation()">
-                    ♻️ Show Hidden ({{ hiddenTransactionIds.size }})
-                </button>
-
-                <button class="btn btn-sm btn-outline-secondary" (click)="exportCSV(); $event.stopPropagation()">
-                    <i class="bi bi-download"></i> Export CSV
-                </button>
-            </div>
-        </div>
-
-        <!-- Search -->
-        <input type="text" [(ngModel)]="searchText" (ngModelChange)="filterTransactions()"
-            placeholder="🔍 Search Payee / UPI" class="form-control mb-3 shadow-sm"
-            (click)="$event.stopPropagation()" />
-
-<div class="table-responsive rounded shadow-sm" (click)="$event.stopPropagation()">
-    <table class="table table-hover align-middle mb-0">
-        <thead class="table-primary sticky-top">
-            <tr>
-                <th>Payee</th>
-                <th class="text-end">Amount (₹)</th>
-                <th>UPI</th>
-                <th>Time</th>
-                <th class="text-center">Action</th>
-            </tr>
-        </thead>
-        <tbody>
-            <tr *ngFor="let t of filteredTransactions" [class.table-warning]="t.amount > 10000"
-                [class.opacity-50]="hiddenTransactionIds.has(t.id)">
-                <td><strong>{{ t.payeeName }}</strong></td>
-                <td class="text-end text-success fw-semibold">
-                    {{ t.amount | currency: 'INR':'symbol':'1.0-0' }}
-                </td>
-                <td><code class="text-muted">{{ t.toUpi }}</code></td>
-                <td>{{ t.emailReceivedDate | date: 'shortTime' }}</td>
-                <td class="text-center">
-                    <button class="btn btn-sm" [ngClass]="{
-              'btn-outline-danger': !hiddenTransactionIds.has(t.id),
-              'btn-outline-success': hiddenTransactionIds.has(t.id)
-            }" (click)="
-              hiddenTransactionIds.has(t.id)
-                ? hiddenTransactionIds.delete(t.id)
-                : hideTransaction(t, $event)
-            " title="Hide / Unhide transaction">
-                        <i [class.bi-eye-slash]="!hiddenTransactionIds.has(t.id)"
-                            [class.bi-eye]="hiddenTransactionIds.has(t.id)"></i>
-                    </button>
-                </td>
-            </tr>
-        </tbody>
-    </table>
-</div>
-
-
-        <!-- Footer -->
-        <small class="text-muted d-block mt-3">
-            💡 Hover on the chart to view transactions for that date.
-            <span *ngIf="!isTablePinned">Click to pin.</span>
-            <span *ngIf="isTablePinned">Click again to unpin.</span>
-        </small>
+  <!-- Category totals -->
+  <div class="summary mt-4">
+    <div
+      *ngFor="let c of categoryTotals | keyvalue"
+      class="metric-badge metric-clickable"
+      (click)="openCategoryModal(c.key)"
+    >
+      {{ c.key }}: ₹{{ c.value | number:'1.0-0' }}
     </div>
+  </div>
+
+  <!-- 📄 Transactions Hover Table -->
+  <div class="hover-table-container shadow-lg" *ngIf="hoveredTransactions.length">
+
+    <!-- Header -->
+    <div class="d-flex justify-content-between align-items-center mb-3">
+
+      <div class="d-flex align-items-center gap-2 flex-wrap">
+
+        <button class="btn btn-sm btn-outline-primary"
+          (click)="changeDay(-1); $event.stopPropagation()">◀</button>
+
+        <input
+          type="date"
+          [value]="hoveredDate"
+          (change)="onDateInputChange($event); $event.stopPropagation()"
+          class="form-control form-control-sm"
+          style="width:160px"
+        />
+
+        <button class="btn btn-sm btn-outline-primary"
+          (click)="changeDay(1); $event.stopPropagation()">▶</button>
+
+        <small class="text-muted ms-2">(DEBIT only)</small>
+
+      </div>
+
+      <div>
+
+        <button
+          *ngIf="hiddenTransactionIds.size > 0"
+          class="btn btn-sm btn-outline-secondary me-2"
+          (click)="clearHiddenTransactions(); $event.stopPropagation()"
+        >
+          ♻️ Show Hidden ({{ hiddenTransactionIds.size }})
+        </button>
+
+        <button
+          class="btn btn-sm btn-outline-secondary"
+          (click)="exportCSV(); $event.stopPropagation()"
+        >
+          Export CSV
+        </button>
+
+      </div>
+
+    </div>
+
+    <!-- 🔍 Search -->
+    <input
+      type="text"
+      [(ngModel)]="searchText"
+      (ngModelChange)="filterTransactions()"
+      placeholder="🔍 Search Payee / UPI"
+      class="form-control mb-3 shadow-sm"
+      (click)="$event.stopPropagation()"
+    />
+
+    <!-- 📋 Table -->
+    <div class="table-responsive rounded shadow-sm" (click)="$event.stopPropagation()">
+
+      <table class="table table-hover align-middle mb-0">
+
+        <thead class="table-primary sticky-top">
+          <tr>
+            <th>Payee</th>
+            <th>Category</th>
+            <th class="text-end">Amount (₹)</th>
+            <th>UPI</th>
+            <th>Time</th>
+            <th class="text-center">Action</th>
+          </tr>
+        </thead>
+
+        <tbody>
+
+          <tr
+            *ngFor="let t of filteredTransactions"
+            [class.table-warning]="t.amount > 10000"
+            [class.opacity-50]="hiddenTransactionIds.has(t.id)"
+          >
+
+            <!-- Payee -->
+            <td>
+              <strong>{{ t.payeeName }}</strong>
+            </td>
+
+            <!-- Category -->
+            <td>
+              <select
+                class="form-select form-select-sm"
+                [value]="getCategory(t)"
+                (change)="updateCategory(t,$event)"
+              >
+                <option>Food</option>
+                <option>Transport</option>
+                <option>Office Spend</option>
+                <option>Medicine</option>
+                <option>Shopping</option>
+                <option>Bills</option>
+                <option>Family</option>
+                <option>Other</option>
+<option>Coldrink/Icecream</option>
+<option>Junk Food</option>
+<option>Groceries</option>
+<option>CreditCard</option>
+              </select>
+            </td>
+
+            <!-- Amount -->
+            <td class="text-end text-success fw-semibold">
+              {{ t.amount | currency:'INR':'symbol':'1.0-0' }}
+            </td>
+
+            <!-- UPI -->
+            <td>
+              <code class="text-muted">{{ t.toUpi }}</code>
+            </td>
+
+            <!-- Time -->
+            <td>
+              {{ t.emailReceivedDate | date:'shortTime' }}
+            </td>
+
+            <!-- Action -->
+            <td class="text-center">
+
+              <button
+                class="btn btn-sm"
+                [ngClass]="{
+                  'btn-outline-danger': !hiddenTransactionIds.has(t.id),
+                  'btn-outline-success': hiddenTransactionIds.has(t.id)
+                }"
+                (click)="
+                  hiddenTransactionIds.has(t.id)
+                    ? hiddenTransactionIds.delete(t.id)
+                    : hideTransaction(t, $event)
+                "
+              >
+
+                <i
+                  [class.bi-eye-slash]="!hiddenTransactionIds.has(t.id)"
+                  [class.bi-eye]="hiddenTransactionIds.has(t.id)"
+                ></i>
+
+              </button>
+
+            </td>
+
+          </tr>
+
+        </tbody>
+
+      </table>
+
+    </div>
+
+  </div>
+<!-- Category Modal -->
+<div class="category-modal-backdrop" *ngIf="isCategoryModalOpen">
+
+  <div class="category-modal shadow-lg">
+
+    <div class="modal-header d-flex justify-content-between align-items-center">
+      <h5>{{ selectedCategory }} Transactions</h5>
+
+      <button
+        class="btn btn-sm btn-danger"
+        (click)="closeCategoryModal()"
+      >
+        ✕
+      </button>
+    </div>
+
+    <div class="table-responsive mt-3">
+
+      <table class="table table-hover">
+
+        <thead>
+          <tr>
+            <th>Payee</th>
+            <th>Amount</th>
+            <th>Date</th>
+          </tr>
+        </thead>
+
+        <tbody>
+
+          <tr *ngFor="let t of categoryTransactions">
+
+            <td>{{ t.payeeName }}</td>
+
+            <td>
+              {{ t.amount | currency:'INR':'symbol':'1.0-0' }}
+            </td>
+
+            <td>
+              {{ t.date }}
+            </td>
+
+          </tr>
+
+        </tbody>
+
+      </table>
+
+    </div>
+
+  </div>
+
 </div>
+</div>
+```
