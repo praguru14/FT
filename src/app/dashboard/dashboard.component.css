@@ -61,6 +61,26 @@ h2.text-center {
 
   z-index: 1000;
 }
+.category-modal canvas {
+  max-height: 260px;
+}
+
+.category-modal {
+  width: 700px;
+  max-height: 80vh;
+  overflow-y: auto;
+}
+
+.transactions-scroll {
+  max-height: 320px;
+  overflow-y: auto;
+}
+
+.sticky-header th {
+  position: sticky;
+  top: 0;
+  z-index: 3;
+}
 .table-responsive {
   max-height: 45vh;
   overflow-y: auto;

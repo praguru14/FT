@@ -18,7 +18,6 @@ import { RouterModule } from '@angular/router';
     NgChartsModule,
     CommonModule,
     FormsModule,
-    TopPayeesComponent,
     RouterModule,
   ],
   templateUrl: './dashboard.component.html',
@@ -39,8 +38,9 @@ export class DashboardComponent implements OnInit, OnDestroy {
   }[] = [];
 topMerchant: { name: string; amount: number; count: number } | null = null;
   private refreshSubscription?: Subscription;
+projectedMonthlySpend = 0;
+daysLeftInMonth = 0;
 
-  // --- session-only hidden transaction IDs (persisted to sessionStorage) ---
   hiddenTransactionIds = new Set<number>();
   private readonly HIDDEN_KEY = 'hiddenTxns';
 
@@ -201,6 +201,7 @@ this.monthTransactions = transactions;
 this.updateLineChart(transactions);
         this.lastRefreshedAt = new Date();
       });
+
   }
 
 updateCategory(t: Transaction, event: any) {
@@ -246,6 +247,15 @@ this.animateTotalAmount(this.totalAmount);
   }
 
   this.avgDailySpend = Math.round(this.totalAmount / (daysToConsider || 1));
+const [year1, month1] = this.selectedMonth.split('-').map(Number);
+const daysInMonth = new Date(year1, month1, 0).getDate();
+
+this.projectedMonthlySpend = this.avgDailySpend * daysInMonth;
+
+const today = new Date();
+const daysPassed = today.getDate();
+
+this.daysLeftInMonth = daysInMonth - daysPassed;
 
     const dailyMap = new Map<string, number>();
     debitTransactions.forEach((t) =>
@@ -454,15 +464,54 @@ openCategoryModal(category: string) {
 
   this.selectedCategory = category;
 
-  this.categoryTransactions = this.monthTransactions.filter(
-    (t) =>
-      t.type === 'DEBIT' &&
-      this.getCategory(t) === category &&
-      !this.hiddenTransactionIds.has(t.id)
-  );
+  this.categoryTransactions = this.monthTransactions
+    .filter(
+      (t) =>
+        t.type === 'DEBIT' &&
+        this.getCategory(t) === category &&
+        !this.hiddenTransactionIds.has(t.id)
+    )
+    .sort((a, b) => b.amount - a.amount);
+
+  // Build merchant pie chart
+  const merchantMap: any = {};
+
+  this.categoryTransactions.forEach(t => {
+
+    const name = t.payeeName || 'Unknown';
+
+    if (!merchantMap[name]) {
+      merchantMap[name] = 0;
+    }
+
+    merchantMap[name] += t.amount ?? 0;
+
+  });
+
+  this.pieChartData = {
+    labels: Object.keys(merchantMap),
+    datasets: [
+      {
+        data: Object.values(merchantMap)
+      }
+    ]
+  };
 
   this.isCategoryModalOpen = true;
 }
+// openCategoryModal(category: string) {
+
+//   this.selectedCategory = category;
+
+//   this.categoryTransactions = this.monthTransactions.filter(
+//     (t) =>
+//       t.type === 'DEBIT' &&
+//       this.getCategory(t) === category &&
+//       !this.hiddenTransactionIds.has(t.id)
+//   );
+
+//   this.isCategoryModalOpen = true;
+// }
 closeCategoryModal() {
   this.isCategoryModalOpen = false;
 }
@@ -594,5 +643,14 @@ getCategory(t: Transaction): string {
   ) return 'Medicine';
   return 'Other';
 }
+
+pieChartData: any = {
+  labels: [],
+  datasets: [
+    {
+      data: []
+    }
+  ]
+};
 }
 

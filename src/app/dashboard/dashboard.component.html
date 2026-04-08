@@ -1,4 +1,4 @@
-```html
+
 <!-- 🏦 Dashboard Header -->
 <h2 class="text-center mb-4">Financial Dashboard</h2>
 
@@ -50,6 +50,12 @@
   <a routerLink="/top-payees" class="metric-badge metric-badge-link">
     Top Payees
   </a>
+<div class="metric-badge">
+  Projected Monthly Spend:
+  <strong>
+    {{ projectedMonthlySpend | currency:'INR':'symbol':'1.0-0' }}
+  </strong>
+</div>
 
   <div class="metric-badge" *ngIf="topMerchant">
     Top Merchant: {{ topMerchant.name }} ₹{{ topMerchant.amount }}
@@ -143,104 +149,104 @@
     />
 
     <!-- 📋 Table -->
-    <div class="table-responsive rounded shadow-sm" (click)="$event.stopPropagation()">
+    <!-- <div class="table-responsive rounded shadow-sm" (click)="$event.stopPropagation()"> -->
+<!-- 📋 Transactions Table -->
+<!-- 📋 Transactions Table -->
+<div class="table-responsive rounded shadow-sm" (click)="$event.stopPropagation()">
 
-      <table class="table table-hover align-middle mb-0">
+  <div style="max-height:320px; overflow-y:auto;">
 
-        <thead class="table-primary sticky-top">
-          <tr>
-            <th>Payee</th>
-            <th>Category</th>
-            <th class="text-end">Amount (₹)</th>
-            <th>UPI</th>
-            <th>Time</th>
-            <th class="text-center">Action</th>
-          </tr>
-        </thead>
+    <table class="table table-hover align-middle mb-0">
 
-        <tbody>
+      <thead class="table-primary sticky-top">
+        <tr>
+          <th>Payee</th>
+          <th>Category</th>
+          <th class="text-end">Amount (₹)</th>
+          <th>UPI</th>
+          <th>Time</th>
+          <th class="text-center">Action</th>
+        </tr>
+      </thead>
 
-          <tr
-            *ngFor="let t of filteredTransactions"
-            [class.table-warning]="t.amount > 10000"
-            [class.opacity-50]="hiddenTransactionIds.has(t.id)"
-          >
+      <tbody>
 
-            <!-- Payee -->
-            <td>
-              <strong>{{ t.payeeName }}</strong>
-            </td>
+        <tr
+          *ngFor="let t of filteredTransactions"
+          [class.table-warning]="t.amount > 10000"
+          [class.opacity-50]="hiddenTransactionIds.has(t.id)"
+        >
 
-            <!-- Category -->
-            <td>
-              <select
-                class="form-select form-select-sm"
-                [value]="getCategory(t)"
-                (change)="updateCategory(t,$event)"
-              >
-                <option>Food</option>
-                <option>Transport</option>
-                <option>Office Spend</option>
-                <option>Medicine</option>
-                <option>Shopping</option>
-                <option>Bills</option>
-                <option>Family</option>
-                <option>Other</option>
-<option>Coldrink/Icecream</option>
-<option>Junk Food</option>
-<option>Groceries</option>
-<option>CreditCard</option>
-              </select>
-            </td>
+          <td>
+            <strong>{{ t.payeeName }}</strong>
+          </td>
 
-            <!-- Amount -->
-            <td class="text-end text-success fw-semibold">
-              {{ t.amount | currency:'INR':'symbol':'1.0-0' }}
-            </td>
+          <td>
+            <select
+              class="form-select form-select-sm"
+              [value]="getCategory(t)"
+              (change)="updateCategory(t,$event)"
+            >
+              <option>Food</option>
+              <option>Transport</option>
+              <option>Office Spend</option>
+              <option>Medicine</option>
+              <option>Shopping</option>
+              <option>Bills</option>
+              <option>Family</option>
+              <option>Other</option>
+              <option>Coldrink/Icecream</option>
+              <option>Junk Food</option>
+              <option>Groceries</option>
+              <option>CreditCard</option>
+            </select>
+          </td>
 
-            <!-- UPI -->
-            <td>
-              <code class="text-muted">{{ t.toUpi }}</code>
-            </td>
+          <td class="text-end text-success fw-semibold">
+            {{ t.amount | currency:'INR':'symbol':'1.0-0' }}
+          </td>
 
-            <!-- Time -->
-            <td>
-              {{ t.emailReceivedDate | date:'shortTime' }}
-            </td>
+          <td>
+            <code class="text-muted">{{ t.toUpi }}</code>
+          </td>
 
-            <!-- Action -->
-            <td class="text-center">
+          <td>
+            {{ t.emailReceivedDate | date:'shortTime' }}
+          </td>
 
-              <button
-                class="btn btn-sm"
-                [ngClass]="{
-                  'btn-outline-danger': !hiddenTransactionIds.has(t.id),
-                  'btn-outline-success': hiddenTransactionIds.has(t.id)
-                }"
-                (click)="
-                  hiddenTransactionIds.has(t.id)
-                    ? hiddenTransactionIds.delete(t.id)
-                    : hideTransaction(t, $event)
-                "
-              >
+          <td class="text-center">
 
-                <i
-                  [class.bi-eye-slash]="!hiddenTransactionIds.has(t.id)"
-                  [class.bi-eye]="hiddenTransactionIds.has(t.id)"
-                ></i>
+            <button
+              class="btn btn-sm"
+              [ngClass]="{
+                'btn-outline-danger': !hiddenTransactionIds.has(t.id),
+                'btn-outline-success': hiddenTransactionIds.has(t.id)
+              }"
+              (click)="
+                hiddenTransactionIds.has(t.id)
+                  ? hiddenTransactionIds.delete(t.id)
+                  : hideTransaction(t, $event)
+              "
+            >
 
-              </button>
+              <i
+                [class.bi-eye-slash]="!hiddenTransactionIds.has(t.id)"
+                [class.bi-eye]="hiddenTransactionIds.has(t.id)"
+              ></i>
 
-            </td>
+            </button>
 
-          </tr>
+          </td>
 
-        </tbody>
+        </tr>
 
-      </table>
+      </tbody>
 
-    </div>
+    </table>
 
+  </div>
+
+</div>
   </div>
 <!-- Category Modal -->
 <div class="category-modal-backdrop" *ngIf="isCategoryModalOpen">
@@ -257,7 +263,16 @@
         ✕
       </button>
     </div>
+<div style="height:300px;margin-bottom:20px">
 
+  <canvas
+    baseChart
+    [data]="pieChartData"
+    [type]="'pie'"
+  >
+  </canvas>
+
+</div>
     <div class="table-responsive mt-3">
 
       <table class="table table-hover">
