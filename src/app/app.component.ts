@@ -4,6 +4,7 @@ import { TransactionsTestComponent } from './transactions-test/transactions-test
 import { ChartsComponent } from './charts/charts.component';
 import { DashboardComponent } from './dashboard/dashboard.component';
 import { TopPayeesComponent } from './top-payees/top-payees.component';
+import { ChatComponent } from './chat/chat.component';
 
 @Component({
   selector: 'app-root',
@@ -14,9 +15,11 @@ import { TopPayeesComponent } from './top-payees/top-payees.component';
     RouterOutlet,
     DashboardComponent,
     TopPayeesComponent,
+ChatComponent
   ],
   template: `
     <router-outlet></router-outlet>
+  <app-chat></app-chat>
   `,
 })
 export class AppComponent {}

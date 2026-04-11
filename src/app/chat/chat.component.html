@@ -1,0 +1,114 @@
+<div class="ai-chat" [class.minimized]="isMinimized">
+
+  <!-- HEADER -->
+  <div class="chat-header">
+    <span>AI Assistant</span>
+
+    <button class="toggle-btn" (click)="toggleChat()">
+      {{ isMinimized ? '+' : '-' }}
+    </button>
+  </div>
+
+  <!-- CHAT CONTENT -->
+  <div class="chat-content">
+
+    <!-- Suggested questions -->
+    <div class="suggested-questions" *ngIf="showSuggestions">
+
+      <div
+        class="suggestion"
+        *ngFor="let q of suggestedQuestions"
+        (click)="askSuggested(q)"
+      >
+        {{ q }}
+      </div>
+
+    </div>
+
+    <!-- CHAT BODY -->
+    <div class="chat-body" #chatBody>
+
+      <div *ngFor="let m of messages"
+           [ngClass]="m.role === 'user' ? 'user-msg' : 'ai-msg'">
+
+        <b *ngIf="m.role === 'user'">You:</b>
+        <b *ngIf="m.role === 'ai'">AI:</b>
+
+        <!-- AI message -->
+        <div *ngIf="m.text">
+          {{ m.text }}
+        </div>
+
+        <!-- NO RESULT -->
+        <div
+          *ngIf="m.text === 'No result found'"
+          class="no-result"
+        >
+          No result found
+        </div>
+
+        <!-- SINGLE VALUE RESULT -->
+        <div
+          *ngIf="m.table?.length === 1
+                && objectKeys(m.table[0]).length === 1
+                && m.text !== 'No result found'"
+          class="single-result"
+        >
+          {{ m.table[0][objectKeys(m.table[0])[0]] }}
+        </div>
+
+        <!-- TABLE RESULT -->
+        <table
+          *ngIf="m.table?.length
+                && !(m.table.length === 1 && objectKeys(m.table[0]).length === 1)
+                && m.text !== 'No result found'"
+          class="result-table"
+        >
+
+          <thead>
+            <tr>
+              <th *ngFor="let key of objectKeys(m.table[0])">
+                {{ key | titlecase }}
+              </th>
+            </tr>
+          </thead>
+
+          <tbody>
+            <tr *ngFor="let row of m.table">
+              <td *ngFor="let key of objectKeys(row)">
+                {{ row[key] }}
+              </td>
+            </tr>
+          </tbody>
+
+        </table>
+
+      </div>
+
+      <!-- Typing indicator -->
+      <div *ngIf="loading" class="ai-msg typing">
+        <span></span>
+        <span></span>
+        <span></span>
+      </div>
+
+    </div>
+
+    <!-- INPUT -->
+    <div class="chat-input">
+
+      <input
+        [(ngModel)]="userInput"
+        placeholder="Ask about your spending..."
+        (keyup.enter)="send()"
+      />
+
+      <button (click)="send()" [disabled]="!userInput">
+        ➤
+      </button>
+
+    </div>
+
+  </div>
+
+</div>
