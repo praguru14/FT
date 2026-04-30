@@ -1,4 +1,3 @@
-
 <!-- 🏦 Dashboard Header -->
 <h2 class="text-center mb-4">Financial Dashboard</h2>
 
@@ -29,7 +28,8 @@
 </div>
 
 <!-- 📊 Summary -->
-<div class="summary text-center mb-4 d-flex justify-content-center flex-wrap gap-3 align-items-center">
+<div class="summary text-center mb-4 d-flex justify-content-start flex-wrap gap-3 align-items-center">
+
   <div class="metric-badge">
     Total Transactions: <strong>{{ totalTransactions }}</strong>
   </div>
@@ -47,19 +47,43 @@
     Highest Spend: ₹{{ highestSpendDay.amount }} on {{ highestSpendDay.date }}
   </div>
 
+  <!-- ✅ Top Payees -->
   <a routerLink="/top-payees" class="metric-badge metric-badge-link">
     Top Payees
   </a>
-<div class="metric-badge">
-  Projected Monthly Spend:
-  <strong>
-    {{ projectedMonthlySpend | currency:'INR':'symbol':'1.0-0' }}
-  </strong>
-</div>
+
+  <!-- ✅ Balance (same level, aligned) -->
+  <div
+    class="metric-badge metric-clickable"
+    (click)="toggleBalance()"
+    style="white-space: nowrap; flex-shrink: 0;"
+  >
+    <span *ngIf="loadingBalance">Loading...</span>
+
+    <span *ngIf="!loadingBalance && previousDayBalance === null">
+      Show Balance
+    </span>
+
+<span *ngIf="!loadingBalance && previousDayBalance !== null">
+  Total: ₹{{ animatedBalance | number:'1.0-2' }}
+  <br />
+<small>
+  Today Left: ₹{{ estimatedRemaining | number:'1.0-2' }}
+</small>
+</span>
+  </div>
+
+  <div class="metric-badge">
+    Projected Monthly Spend:
+    <strong>
+      {{ projectedMonthlySpend | currency:'INR':'symbol':'1.0-0' }}
+    </strong>
+  </div>
 
   <div class="metric-badge" *ngIf="topMerchant">
     Top Merchant: {{ topMerchant.name }} ₹{{ topMerchant.amount }}
   </div>
+
 </div>
 
 <!-- 📈 Chart -->
@@ -149,105 +173,94 @@
     />
 
     <!-- 📋 Table -->
-    <!-- <div class="table-responsive rounded shadow-sm" (click)="$event.stopPropagation()"> -->
-<!-- 📋 Transactions Table -->
-<!-- 📋 Transactions Table -->
-<div class="table-responsive rounded shadow-sm" (click)="$event.stopPropagation()">
+    <div class="table-responsive rounded shadow-sm" (click)="$event.stopPropagation()">
 
-  <div style="max-height:320px; overflow-y:auto;">
+      <div style="max-height:320px; overflow-y:auto;">
 
-    <table class="table table-hover align-middle mb-0">
+        <table class="table table-hover align-middle mb-0">
 
-      <thead class="table-primary sticky-top">
-        <tr>
-          <th>Payee</th>
-          <th>Category</th>
-          <th class="text-end">Amount (₹)</th>
-          <th>UPI</th>
-          <th>Time</th>
-          <th class="text-center">Action</th>
-        </tr>
-      </thead>
+          <thead class="table-primary sticky-top">
+            <tr>
+              <th>Payee</th>
+              <th>Category</th>
+              <th class="text-end">Amount (₹)</th>
+              <th>UPI</th>
+              <th>Time</th>
+              <th class="text-center">Action</th>
+            </tr>
+          </thead>
 
-      <tbody>
+          <tbody>
 
-        <tr
-          *ngFor="let t of filteredTransactions"
-          [class.table-warning]="t.amount > 10000"
-          [class.opacity-50]="hiddenTransactionIds.has(t.id)"
-        >
-
-          <td>
-            <strong>{{ t.payeeName }}</strong>
-          </td>
-
-          <td>
-            <select
-              class="form-select form-select-sm"
-              [value]="getCategory(t)"
-              (change)="updateCategory(t,$event)"
-            >
-              <option>Food</option>
-              <option>Transport</option>
-              <option>Office Spend</option>
-              <option>Medicine</option>
-              <option>Shopping</option>
-              <option>Bills</option>
-              <option>Family</option>
-              <option>Other</option>
-              <option>Coldrink/Icecream</option>
-              <option>Junk Food</option>
-              <option>Groceries</option>
-              <option>CreditCard</option>
-            </select>
-          </td>
-
-          <td class="text-end text-success fw-semibold">
-            {{ t.amount | currency:'INR':'symbol':'1.0-0' }}
-          </td>
-
-          <td>
-            <code class="text-muted">{{ t.toUpi }}</code>
-          </td>
-
-          <td>
-            {{ t.emailReceivedDate | date:'shortTime' }}
-          </td>
-
-          <td class="text-center">
-
-            <button
-              class="btn btn-sm"
-              [ngClass]="{
-                'btn-outline-danger': !hiddenTransactionIds.has(t.id),
-                'btn-outline-success': hiddenTransactionIds.has(t.id)
-              }"
-              (click)="
-                hiddenTransactionIds.has(t.id)
-                  ? hiddenTransactionIds.delete(t.id)
-                  : hideTransaction(t, $event)
-              "
+            <tr
+              *ngFor="let t of filteredTransactions"
+              [class.table-warning]="t.amount > 10000"
+              [class.opacity-50]="hiddenTransactionIds.has(t.id)"
             >
 
-              <i
-                [class.bi-eye-slash]="!hiddenTransactionIds.has(t.id)"
-                [class.bi-eye]="hiddenTransactionIds.has(t.id)"
-              ></i>
+              <td><strong>{{ t.payeeName }}</strong></td>
 
-            </button>
+              <td>
+                <select
+                  class="form-select form-select-sm"
+                  [value]="getCategory(t)"
+                  (change)="updateCategory(t,$event)"
+                >
+                  <option>Transport</option>
+                  <option>Office Spend</option>
+                  <option>Medicine</option>
+                  <option>Shopping</option>
+                  <option>Bills</option>
+                  <option>Family</option>
+                  <option>Other</option>
+                  <option>Junk Food</option>
+                  <option>Groceries</option>
+                  <option>CreditCard</option>
+                </select>
+              </td>
 
-          </td>
+              <td class="text-end text-success fw-semibold">
+                {{ t.amount | currency:'INR':'symbol':'1.0-0' }}
+              </td>
 
-        </tr>
+              <td><code class="text-muted">{{ t.toUpi }}</code></td>
 
-      </tbody>
+              <td>{{ t.emailReceivedDate | date:'shortTime' }}</td>
 
-    </table>
+              <td class="text-center">
 
+                <button
+                  class="btn btn-sm"
+                  [ngClass]="{
+                    'btn-outline-danger': !hiddenTransactionIds.has(t.id),
+                    'btn-outline-success': hiddenTransactionIds.has(t.id)
+                  }"
+                  (click)="
+                    hiddenTransactionIds.has(t.id)
+                      ? hiddenTransactionIds.delete(t.id)
+                      : hideTransaction(t, $event)
+                  "
+                >
+                  <i
+                    [class.bi-eye-slash]="!hiddenTransactionIds.has(t.id)"
+                    [class.bi-eye]="hiddenTransactionIds.has(t.id)"
+                  ></i>
+                </button>
+
+              </td>
+
+            </tr>
+
+          </tbody>
+
+        </table>
+
+      </div>
+
+    </div>
   </div>
-
 </div>
-  </div>
+
 <!-- Category Modal -->
 <div class="category-modal-backdrop" *ngIf="isCategoryModalOpen">
 
@@ -263,16 +276,11 @@
         ✕
       </button>
     </div>
-<div style="height:300px;margin-bottom:20px">
 
-  <canvas
-    baseChart
-    [data]="pieChartData"
-    [type]="'pie'"
-  >
-  </canvas>
+    <div style="height:300px;margin-bottom:20px">
+      <canvas baseChart [data]="pieChartData" [type]="'pie'"></canvas>
+    </div>
 
-</div>
     <div class="table-responsive mt-3">
 
       <table class="table table-hover">
@@ -286,21 +294,11 @@
         </thead>
 
         <tbody>
-
           <tr *ngFor="let t of categoryTransactions">
-
             <td>{{ t.payeeName }}</td>
-
-            <td>
-              {{ t.amount | currency:'INR':'symbol':'1.0-0' }}
-            </td>
-
-            <td>
-              {{ t.date }}
-            </td>
-
+            <td>{{ t.amount | currency:'INR':'symbol':'1.0-0' }}</td>
+            <td>{{ t.date }}</td>
           </tr>
-
         </tbody>
 
       </table>
@@ -310,5 +308,3 @@
   </div>
 
 </div>
-</div>
-```

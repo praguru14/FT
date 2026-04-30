@@ -25,7 +25,11 @@ export class TransactionService {
 
   constructor(private http: HttpClient) {}
 
-  // --- Get transactions with filters / pagination ---
+getPreviousDayBalance(date: string): Observable<number> {
+  const params = new HttpParams().set('date', date);
+  return this.http.get<number>(`${this.baseUrl}/balance`, { params });
+}
+
   getTransactions(params?: any): Observable<{ content: Transaction[] }> {
     let httpParams = new HttpParams();
     if (params) {

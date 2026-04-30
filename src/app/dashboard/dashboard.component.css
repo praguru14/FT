@@ -401,3 +401,12 @@ small.text-muted {
   opacity: 0;
   transform: translateY(-5px);
 }
+.metric-clickable {
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.metric-clickable:hover {
+  background-color: #f5f5f5;
+  transform: translateY(-1px);
+}
