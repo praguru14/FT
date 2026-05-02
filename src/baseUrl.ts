@@ -1,4 +1,6 @@
 export const baseUrl = {
-  apiUrl: 'https://financetracker-vgmc.onrender.com/transactions',
-  // apiUrl: 'http://localhost:8090/transactions',
+  apiUrl:
+    window.location.hostname === 'localhost'
+      ? 'http://localhost:8090/transactions'
+      : 'https://financetracker-vgmc.onrender.com/transactions',
 };
