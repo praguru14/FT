@@ -64,7 +64,7 @@ suggestedQuestions: string[] = [
 showSuggestions = true;
 
 constructor(private aiService: AiService) {}
-isMinimized = false;
+isMinimized = true;
 
 toggleChat(){
   this.isMinimized = !this.isMinimized;
