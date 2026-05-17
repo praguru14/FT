@@ -84,6 +84,16 @@
     Top Merchant: {{ topMerchant.name }} ₹{{ topMerchant.amount }}
   </div>
 
+  <!-- 📊 Bills Toggle -->
+  <div
+    class="metric-badge metric-clickable"
+    (click)="toggleBills()"
+    style="white-space: nowrap; flex-shrink: 0;"
+  >
+    <span *ngIf="!showBills">� Show Bills</span>
+    <span *ngIf="showBills">💰 Hide Bills</span>
+  </div>
+
 </div>
 
 <!-- 📈 Chart -->

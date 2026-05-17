@@ -25,6 +25,7 @@
   })
   export class DashboardComponent implements OnInit, OnDestroy {
   showBalance = false;
+  showBills = false; // Toggle for bills display
   previousDayBalance: number | null = null;
   loadingBalance = false;
     isTablePinned = false;
@@ -124,6 +125,13 @@ this.calculateRemaining();
         }
       });
   }
+
+  toggleBills() {
+    this.showBills = !this.showBills;
+    // Reload data to update category totals on graph
+    this.loadMonthData();
+  }
+
   refreshBalanceSilently() {
     const today = new Date().toISOString().split('T')[0];
 
@@ -236,7 +244,7 @@ this.calculateRemaining();
 
     loadTopPayees() {
       this.transactionService
-        .getTransactions({ page: 0, size: 100000 }) // large size to get all
+        .getTransactionsWithBills({ page: 0, size: 100000 }, this.showBills) // large size to get all
         .subscribe((res) => {
           if (!res?.content?.length) {
             console.warn('No transactions found');
@@ -291,7 +299,7 @@ this.calculateRemaining();
       const toDate = `${year}-${month.toString().padStart(2, '0')}-${lastDay}`;
 
       this.transactionService
-        .getTransactions({ fromDate, toDate, page: 0, size: 1000 })
+        .getTransactionsWithBills({ fromDate, toDate, page: 0, size: 1000 }, this.showBills)
         .subscribe((res) => {
           const transactions = res?.content || [];
   this.monthTransactions = transactions;
@@ -388,6 +396,9 @@ this.calculateRemaining();
 
   debitTransactions.forEach(t => {
     const category = this.getCategory(t);
+
+    // Skip Bills category if showBills is false
+    if (category === 'Bills' && !this.showBills) return;
 
     if (!this.categoryTotals[category]) {
       this.categoryTotals[category] = 0;

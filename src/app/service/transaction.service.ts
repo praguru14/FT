@@ -44,6 +44,21 @@ getPreviousDayBalance(date: string): Observable<number> {
       params: httpParams,
     });
   }
+
+  getTransactionsWithBills(params?: any, includeBills: boolean = false): Observable<{ content: Transaction[] }> {
+    let httpParams = new HttpParams().set('includeBills', includeBills.toString());
+    if (params) {
+      Object.keys(params).forEach((key) => {
+        if (params[key] !== null && params[key] !== undefined) {
+          httpParams = httpParams.set(key, params[key]);
+        }
+      });
+    }
+    console.log('Fetching transactions with includeBills:', includeBills);
+    return this.http.get<{ content: Transaction[] }>(this.baseUrl, {
+      params: httpParams,
+    });
+  }
 updateCategorySwipe(id: number, category: string) {
   return this.http.put(
     `${this.baseUrl}/transactions/${id}/category-swipe`,
